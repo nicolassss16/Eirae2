@@ -2,66 +2,135 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eirae Aire</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EIRAE - Calidad del Aire y Medioambiente</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       background: #f3f3f3;
       color: #333;
+      line-height: 1.6;
     }
     header {
       background: #1e88e5;
       color: white;
-      padding: 1rem;
+      padding: 1.5rem 1rem;
       text-align: center;
+      box-shadow: 0 2px 6px rgba(30,136,229,0.6);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    header p {
+      margin: 0.4rem 0 0;
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+    nav {
+      background: #1565c0;
+      padding: 0.7rem 1rem;
+      text-align: center;
+      box-shadow: inset 0 -2px 8px rgba(0,0,0,0.15);
+    }
+    nav a {
+      color: white;
+      margin: 0 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: color 0.2s ease-in-out;
+    }
+    nav a:hover, nav a:focus {
+      color: #ffca28;
     }
     section {
-      padding: 2rem;
+      background: white;
+      margin: 1.8rem auto;
+      padding: 1.8rem 2rem;
+      max-width: 1000px;
+      border-radius: 8px;
+      box-shadow: 0 3px 9px rgba(0,0,0,0.1);
+    }
+    section h2, section h3 {
+      color: #1e88e5;
+      margin-top: 0;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    section p, section ul {
+      font-size: 1rem;
+      color: #444;
+    }
+    ul {
+      padding-left: 1.3rem;
+      margin: 0.8rem 0 1.4rem 0;
+    }
+    ul li {
+      margin-bottom: 0.5rem;
     }
     .dashboard {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      flex-wrap: wrap;
+      grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
+      gap: 1.6rem;
+      margin-top: 1rem;
     }
     canvas {
       background: white;
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      height: 220px !important;
+      width: 100% !important;
     }
     #map {
       height: 300px;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(0,0,0,0.15);
+      margin-top: 0.8rem;
     }
     footer {
       text-align: center;
       background: #1e88e5;
       color: white;
-      padding: 1rem;
+      padding: 1rem 1rem;
       margin-top: 2rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.6px;
     }
     .boton-descarga {
       display: inline-block;
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
+      margin-top: 1.4rem;
+      padding: 0.6rem 1.1rem;
       background-color: #1e88e5;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 10px rgba(30,136,229,0.4);
+    }
+    .boton-descarga:hover {
+      background-color: #145ea8;
+      box-shadow: 0 6px 14px rgba(20,94,168,0.6);
     }
     .equipo {
       background-color: white;
-      padding: 1rem;
+      padding: 1rem 1.4rem;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
       max-width: 600px;
-      margin: auto;
+      margin: 1rem auto 0 auto;
+      font-size: 1rem;
+      line-height: 1.4;
+      color: #222;
     }
     .destacado-temp {
       background: #fff3e0;
@@ -74,6 +143,18 @@
       color: #e65100;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    @media (max-width: 540px) {
+      nav a {
+        display: block;
+        margin: 0.4rem 0;
+      }
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 200px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -81,29 +162,64 @@
     <h1>Eirae Aire y Medioambiente</h1>
     <p>Monitoreo de calidad del aire en tiempo real</p>
   </header>
-
-  <section>
+  <nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#funciones">Funciones</a>
+    <a href="#zonas">Zonas Frecuentadas</a>
+    <a href="#sobre">Sobre EIRAE</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+  
+  <section id="inicio">
     <h2>Datos Simulados en Tiempo Real</h2>
     <div id="tempActual" class="destacado-temp">Temperatura actual: -- °C</div>
-    <div class="dashboard">
-      <canvas id="chartCO2"></canvas>
-      <canvas id="chartPM"></canvas>
-      <canvas id="chartTemp"></canvas>
-      <canvas id="chartHumedad"></canvas>
-      <canvas id="chartGas"></canvas>
-      <canvas id="chartCO"></canvas>
+    <div class="dashboard" aria-label="Gráficos de calidad del aire y condiciones ambientales">
+      <canvas id="chartCO2" aria-label="Gráfico de CO2" role="img"></canvas>
+      <canvas id="chartPM" aria-label="Gráfico de partículas PM2.5" role="img"></canvas>
+      <canvas id="chartTemp" aria-label="Gráfico de temperatura" role="img"></canvas>
+      <canvas id="chartHumedad" aria-label="Gráfico de humedad relativa" role="img"></canvas>
+      <canvas id="chartGas" aria-label="Gráfico de gas inflamable" role="img"></canvas>
+      <canvas id="chartCO" aria-label="Gráfico de monóxido de carbono" role="img"></canvas>
     </div>
-    <button class="boton-descarga" onclick="descargarCSV()">Descargar datos simulados (CSV)</button>
+    <button class="boton-descarga" onclick="descargarCSV()" aria-label="Descargar datos simulados en formato CSV">Descargar datos simulados (CSV)</button>
   </section>
 
-  <section>
+  <section id="mapa-sensor">
     <h2>Ubicación del Sensor</h2>
-    <div id="map"></div>
+    <div id="map" role="application" aria-label="Mapa mostrando ubicación del sensor"></div>
   </section>
 
-  <section>
+  <section id="funciones">
+    <h2>Nuestras Funciones</h2>
+    <ul>
+      <li><strong>Monitoreo Continuo de Calidad del Aire:</strong> Servicio de monitoreo en tiempo real con despliegue de sensores y entrega online de datos.</li>
+      <li><strong>Notificaciones de Calidad del Aire:</strong> Alertas personalizadas para zonas frecuentes y avisos cuando la calidad baja de cierto nivel.</li>
+      <li><strong>Análisis de Datos y Consultoría Ambiental:</strong> Análisis, asesoramiento y recomendaciones para prácticas sostenibles y saludables.</li>
+    </ul>
+  </section>
+
+  <section id="zonas">
+    <h2>Zonas Frecuentadas</h2>
+    <ul>
+      <li>Tandil, ARG</li>
+      <li>9 de Julio, ARG</li>
+      <li>Adrogué, ARG</li>
+    </ul>
+  </section>
+
+  <section id="sobre">
+    <h2>Sobre EIRAE y Su Objetivo</h2>
+    <p>La idea de EIRAE nació tras conocer el nivel de contaminación al que estamos expuestos y del que no somos conscientes. Nuestro objetivo es ayudar a visibilizar la contaminación e incentivar a tomar medidas necesarias para mejorar la calidad del aire y proteger nuestra salud y medioambiente.</p>
+  </section>
+
+  <section id="contacto">
+    <h2>Contacto</h2>
+    <p>Email de contacto: <a href="mailto:Eirae@gmail.com">Eirae@gmail.com</a></p>
+  </section>
+
+  <section id="equipo">
     <h2>Equipo del Proyecto</h2>
-    <div class="equipo">
+    <div class="equipo" aria-label="Información sobre el equipo del proyecto EIRAE">
       <p><strong>Nombre del Proyecto:</strong> Eirae Aire</p>
       <p><strong>Integrantes:</strong> Nicolás Merlini y Paola Irigoitia</p>
       <p><strong>Escuela:</strong> E.E.S.T. N.º 2 Alte. Brown</p>
@@ -197,3 +313,4 @@
   </script>
 </body>
 </html>
+
