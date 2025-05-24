@@ -249,16 +249,50 @@
             tension: 0.2,
             fill: false
           }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              ticks: {
+                color: '#333', // Color de las etiquetas del eje X
+                font: {
+                  size: 14 // Tamaño de la fuente de las etiquetas del eje X
+                }
+              }
+            },
+            y: {
+              ticks: {
+                color: '#333', // Color de las etiquetas del eje Y
+                font: {
+                  size: 14 // Tamaño de la fuente de las etiquetas del eje Y
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#333', // Color de la leyenda
+                font: {
+                  size: 16 // Tamaño de la fuente de la leyenda
+                }
+              }
+            },
+            tooltip: {
+              titleColor: '#333', // Color del título del tooltip
+              bodyColor: '#333', // Color del cuerpo del tooltip
+              titleFont: {
+                size: 14 // Tamaño de la fuente del título del tooltip
+              },
+              bodyFont: {
+                size: 14 // Tamaño de la fuente del cuerpo del tooltip
+              }
+            }
+          }
         }
       });
     }
-
-    const chartCO2 = crearGrafico('chartCO2', 'CO₂ (ppm)', '#e53935');
-    const chartPM = crearGrafico('chartPM', 'PM2.5 (µg/m³)', '#43a047');
-    const chartTemp = crearGrafico('chartTemp', 'Temperatura (°C)', '#fb8c00');
-    const chartHumedad = crearGrafico('chartHumedad', 'Humedad Relativa (%)', '#1e88e5');
-    const chartGas = crearGrafico('chartGas', 'Gas Inflamable (ppm)', '#8e24aa');
-    const chartCO = crearGrafico('chartCO', 'Monóxido de Carbono (ppm)', '#3949ab');
 
     function agregarDatos() {
       const hora = new Date().toLocaleTimeString();
