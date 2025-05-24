@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eirae Aire</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f3f3;
+      color: #333;
+    }
+    header {
+      background: #1e88e5;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    section {
+      padding: 2rem;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    canvas {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #map {
+      height: 300px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    footer {
+      text-align: center;
+      background: #1e88e5;
+      color: white;
+      padding: 1rem;
+      margin-top: 2rem;
+    }
+    .boton-descarga {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: #1e88e5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .equipo {
+      background-color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    .destacado-temp {
+      background: #fff3e0;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #e65100;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Eirae Aire y Medioambiente</h1>
+    <p>Monitoreo de calidad del aire en tiempo real</p>
+  </header>
+
+  <section>
+    <h2>Datos Simulados en Tiempo Real</h2>
+    <div id="tempActual" class="destacado-temp">Temperatura actual: -- °C</div>
+    <div class="dashboard">
+      <canvas id="chartCO2"></canvas>
+      <canvas id="chartPM"></canvas>
+      <canvas id="chartTemp"></canvas>
+      <canvas id="chartHumedad"></canvas>
+      <canvas id="chartGas"></canvas>
+      <canvas id="chartCO"></canvas>
+    </div>
+    <button class="boton-descarga" onclick="descargarCSV()">Descargar datos simulados (CSV)</button>
+  </section>
+
+  <section>
+    <h2>Ubicación del Sensor</h2>
+    <div id="map"></div>
+  </section>
+
+  <section>
+    <h2>Equipo del Proyecto</h2>
+    <div class="equipo">
+      <p><strong>Nombre del Proyecto:</strong> Eirae Aire</p>
+      <p><strong>Integrantes:</strong> Nicolás Merlini y Paola Irigoitia</p>
+      <p><strong>Escuela:</strong> E.E.S.T. N.º 2 Alte. Brown</p>
+      <p><strong>Curso:</strong> 7to 3ra - Orientación Programación</p>
+    </div>
+  </section>
+
+  <footer>
+    Proyecto educativo desarrollado por el equipo Eirae · Escuela Técnica
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const datosSimulados = [];
+
+    function crearGrafico(id, label, color) {
+      const ctx = document.getElementById(id).getContext('2d');
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: label,
+            data: [],
+            borderColor: color,
+            tension: 0.2,
+            fill: false
+          }]
+        }
+      });
+    }
+
+    const chartCO2 = crearGrafico('chartCO2', 'CO₂ (ppm)', '#e53935');
+    const chartPM = crearGrafico('chartPM', 'PM2.5 (µg/m³)', '#43a047');
+    const chartTemp = crearGrafico('chartTemp', 'Temperatura (°C)', '#fb8c00');
+    const chartHumedad = crearGrafico('chartHumedad', 'Humedad Relativa (%)', '#1e88e5');
+    const chartGas = crearGrafico('chartGas', 'Gas Inflamable (ppm)', '#8e24aa');
+    const chartCO = crearGrafico('chartCO', 'Monóxido de Carbono (ppm)', '#3949ab');
+
+    function agregarDatos() {
+      const hora = new Date().toLocaleTimeString();
+      const co2 = Math.floor(Math.random() * 300 + 450); // 450–750 ppm
+      const pm25 = parseFloat((Math.random() * 1 + 5).toFixed(2)); // 5–20 µg/m³
+      const temp = parseFloat((Math.random() * 1 + 18).toFixed(1)); // 18–28 °C
+      const humedad = parseFloat((Math.random() * 10 + 40).toFixed(1)); // 40–70%
+      const gas = Math.floor(Math.random() * 25 + 20); // 20–70 ppm
+      const co = Math.floor(Math.random() * 5 + 1); // 1–10 ppm
+
+      datosSimulados.push({ hora, co2, pm25, temp, humedad, gas, co });
+
+      const charts = [chartCO2, chartPM, chartTemp, chartHumedad, chartGas, chartCO];
+      const datos = [co2, pm25, temp, humedad, gas, co];
+
+      charts.forEach((chart, i) => {
+        if (chart.data.labels.length > 10) {
+          chart.data.labels.shift();
+          chart.data.datasets[0].data.shift();
+        }
+        chart.data.labels.push(hora);
+        chart.data.datasets[0].data.push(datos[i]);
+        chart.update();
+      });
+
+      document.getElementById('tempActual').innerText = `Temperatura actual: ${temp} °C`;
+    }
+
+    setInterval(agregarDatos, 2000);
+
+    const map = L.map('map').setView([-34.7931, -58.3909], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+    L.marker([-34.896489, -58.397594]).addTo(map)
+      .bindPopup('Ubicación del sensor Eirae')
+      .openPopup();
+
+    function descargarCSV() {
+      let csv = 'Hora,CO2 (ppm),PM2.5 (µg/m³),Temperatura (°C),Humedad (%),Gas Inflamable (ppm),CO (ppm)\n';
+      datosSimulados.forEach(row => {
+        csv += `${row.hora},${row.co2},${row.pm25},${row.temp},${row.humedad},${row.gas},${row.co}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.setAttribute('href', URL.createObjectURL(blob));
+      link.setAttribute('download', 'datos_simulados_eirae.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
