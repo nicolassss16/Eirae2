@@ -172,7 +172,7 @@
   
   <section id="inicio">
     <h2>Datos Simulados en Tiempo Real</h2>
-    <div id="tempActual" class="destacado-temp">Temperatura actual: -- °C</div>
+    <div id="tempActual" class="destacado-temp" aria-live="polite">Temperatura actual: -- °C</div>
     <div class="dashboard" aria-label="Gráficos de calidad del aire y condiciones ambientales">
       <canvas id="chartCO2" aria-label="Gráfico de CO2" role="img"></canvas>
       <canvas id="chartPM" aria-label="Gráfico de partículas PM2.5" role="img"></canvas>
@@ -255,17 +255,17 @@
           scales: {
             x: {
               ticks: {
-                color: '#333', // Color de las etiquetas del eje X
+                color: '#333',
                 font: {
-                  size: 14 // Tamaño de la fuente de las etiquetas del eje X
+                  size: 14
                 }
               }
             },
             y: {
               ticks: {
-                color: '#333', // Color de las etiquetas del eje Y
+                color: '#333',
                 font: {
-                  size: 14 // Tamaño de la fuente de las etiquetas del eje Y
+                  size: 14
                 }
               }
             }
@@ -273,20 +273,20 @@
           plugins: {
             legend: {
               labels: {
-                color: '#333', // Color de la leyenda
+                color: '#333',
                 font: {
-                  size: 16 // Tamaño de la fuente de la leyenda
+                  size: 16
                 }
               }
             },
             tooltip: {
-              titleColor: '#333', // Color del título del tooltip
-              bodyColor: '#333', // Color del cuerpo del tooltip
+              titleColor: '#333',
+              bodyColor: '#333',
               titleFont: {
-                size: 14 // Tamaño de la fuente del título del tooltip
+                size: 14
               },
               bodyFont: {
-                size: 14 // Tamaño de la fuente del cuerpo del tooltip
+                size: 14
               }
             }
           }
@@ -294,14 +294,21 @@
       });
     }
 
+    const chartCO2 = crearGrafico('chartCO2', 'CO₂ (ppm)', '#e53935');
+    const chartPM = crearGrafico('chartPM', 'PM2.5 (µg/m³)', '#43a047');
+    const chartTemp = crearGrafico('chartTemp', 'Temperatura (°C)', '#fb8c00');
+    const chartHumedad = crearGrafico('chartHumedad', 'Humedad Relativa (%)', '#1e88e5');
+    const chartGas = crearGrafico('chartGas', 'Gas Inflamable (ppm)', '#8e24aa');
+    const chartCO = crearGrafico('chartCO', 'Monóxido de Carbono (ppm)', '#3949ab');
+
     function agregarDatos() {
       const hora = new Date().toLocaleTimeString();
-      const co2 = Math.floor(Math.random() * 300 + 450); // 450–750 ppm
-      const pm25 = parseFloat((Math.random() * 1 + 5).toFixed(2)); // 5–20 µg/m³
-      const temp = parseFloat((Math.random() * 1 + 18).toFixed(1)); // 18–28 °C
-      const humedad = parseFloat((Math.random() * 10 + 40).toFixed(1)); // 40–70%
-      const gas = Math.floor(Math.random() * 25 + 20); // 20–70 ppm
-      const co = Math.floor(Math.random() * 5 + 1); // 1–10 ppm
+      const co2 = Math.floor(Math.random() * 300 + 450);
+      const pm25 = parseFloat((Math.random() * 1 + 5).toFixed(2));
+      const temp = parseFloat((Math.random() * 1 + 18).toFixed(1));
+      const humedad = parseFloat((Math.random() * 10 + 40).toFixed(1));
+      const gas = Math.floor(Math.random() * 25 + 20);
+      const co = Math.floor(Math.random() * 5 + 1);
 
       datosSimulados.push({ hora, co2, pm25, temp, humedad, gas, co });
 
@@ -334,7 +341,7 @@
     function descargarCSV() {
       let csv = 'Hora,CO2 (ppm),PM2.5 (µg/m³),Temperatura (°C),Humedad (%),Gas Inflamable (ppm),CO (ppm)\n';
       datosSimulados.forEach(row => {
-        csv += `${row.hora},${row.co2},${row.pm25},${row.temp},${row.humedad},${row.gas},${row.co}\n`;
+        csv += \`\${row.hora},\${row.co2},\${row.pm25},\${row.temp},\${row.humedad},\${row.gas},\${row.co}\n\`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
