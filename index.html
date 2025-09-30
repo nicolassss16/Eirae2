@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    <meta charset="UTF-g" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EIRAE v2.6 - Dashboard Interactivo</title>
+    <title>EIRAE v2.7 - Dashboard Corregido</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -20,6 +20,9 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .leaflet-popup-content-wrapper { border-radius: 8px; }
         .leaflet-popup-content { font-family: 'Inter', sans-serif; }
+        .chart-container {
+            height: 280px; /* Un poco más de altura para los gráficos */
+        }
     </style>
 </head>
 <body class="text-slate-800">
@@ -65,12 +68,12 @@
 
             <div id="tab-content">
                 <div id="tab-metricas" class="tab-pane active"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartRiesgo"></canvas></div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartSintomas"></canvas></div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartAgua"></canvas></div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartTemp"></canvas></div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartHumedad"></canvas></div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartMosquitos"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartRiesgo"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartSintomas"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartAgua"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartTemp"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartHumedad"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg chart-container"><canvas id="chartMosquitos"></canvas></div>
                 </div></div>
                 <div id="tab-resumen" class="tab-pane hidden"><div class="bg-white p-6 rounded-xl shadow-lg"><div class="overflow-x-auto"><table class="w-full text-sm text-left">
                     <thead class="text-xs text-slate-500 uppercase bg-slate-50"><tr>
@@ -91,14 +94,25 @@
     
     <footer class="bg-slate-800 text-white mt-8">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
-            <p>EIRAE - Prototipo Interactivo v2.6</p>
+            <p>EIRAE - Prototipo Interactivo v2.7</p>
         </div>
     </footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- CONFIGURACIÓN INICIAL (GRÁFICOS, MAPA, ZONAS) ---
+        
+        // --- VARIABLES Y CONFIGURACIÓN INICIAL ---
         Chart.defaults.font.family = "'Inter', sans-serif";
+        const zonas = [
+            { id: 1, nombre: 'B. Gendarmería', lat: -34.893, lon: -58.390, riesgoBase: 10, previousRiskLevel: 'Bajo', riesgoActual: 10, sintomas: 0 },
+            { id: 2, nombre: 'B. Las Casitas', lat: -34.885, lon: -58.388, riesgoBase: 25, previousRiskLevel: 'Bajo', riesgoActual: 25, sintomas: 0 },
+            { id: 3, nombre: 'Centro de Glew', lat: -34.888, lon: -58.384, riesgoBase: 15, previousRiskLevel: 'Bajo', riesgoActual: 15, sintomas: 0 },
+            { id: 4, nombre: 'B. Los Alamos', lat: -34.882, lon: -58.378, riesgoBase: 40, previousRiskLevel: 'Moderado', riesgoActual: 40, sintomas: 0 }
+        ];
+        const riskColors = { Bajo: '#22c55e', Moderado: '#f97316', Alto: '#ef4444' };
+        let activeEvent = { type: 'normal', triggered: false };
+
+        // --- INICIALIZACIÓN DE COMPONENTES VISUALES ---
         const charts = {
             riesgo: createChart('chartRiesgo', 'Índice de Riesgo (%)', '#ef4444'),
             sintomas: createChart('chartSintomas', 'Reportes de Síntomas', '#f97316'),
@@ -107,15 +121,8 @@
             humedad: createChart('chartHumedad', 'Humedad (%)', '#22c55e'),
             mosquitos: createChart('chartMosquitos', 'Densidad Mosquitos', '#a855f7'),
         };
-        const zonas = [
-            { id: 1, nombre: 'B. Gendarmería', lat: -34.893, lon: -58.390, riesgoBase: 10, previousRiskLevel: 'Bajo', riesgoActual: 10, sintomas: 0 },
-            { id: 2, nombre: 'B. Las Casitas', lat: -34.885, lon: -58.388, riesgoBase: 25, previousRiskLevel: 'Bajo', riesgoActual: 25, sintomas: 0 },
-            { id: 3, nombre: 'Centro de Glew', lat: -34.888, lon: -58.384, riesgoBase: 15, previousRiskLevel: 'Bajo', riesgoActual: 15, sintomas: 0 },
-            { id: 4, nombre: 'B. Los Alamos', lat: -34.882, lon: -58.378, riesgoBase: 40, previousRiskLevel: 'Moderado', riesgoActual: 40, sintomas: 0 }
-        ];
         const map = L.map('map').setView([-34.888, -58.384], 14);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
-        const riskColors = { Bajo: '#22c55e', Moderado: '#f97316', Alto: '#ef4444' };
         const markers = {};
         zonas.forEach(zona => {
             markers[zona.id] = L.circleMarker([zona.lat, zona.lon], { radius: 10, fillOpacity: 0.8, stroke: false }).addTo(map);
@@ -123,88 +130,116 @@
         const eventLog = document.getElementById('event-log');
         const zonesTableBody = document.getElementById('zones-table-body');
 
+        // --- FUNCIONES AUXILIARES ---
+        function createChart(id, label, color) {
+            const ctx = document.getElementById(id).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line', data: { labels: [], datasets: [{ 
+                label, data: [], borderColor: color, backgroundColor: `${color}20`,
+                borderWidth: 2.5, pointRadius: 0, tension: 0.4, fill: true }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, x: { ticks: { display: false } } } }
+            });
+        }
+        function addEventToLog(message, level) {
+            const time = new Date().toLocaleTimeString('es-AR');
+            const logEntry = document.createElement('p');
+            logEntry.className = `p-2 rounded-md bg-slate-50 text-${{Alto:'red',Moderado:'yellow',Bajo:'green'}[level]}-600`;
+            logEntry.innerHTML = `<span class="font-semibold">[${time}]</span> ${message}`;
+            eventLog.prepend(logEntry);
+            if (eventLog.children.length > 10) { eventLog.lastChild.remove(); }
+        }
+        function updateZonesTable() {
+            zonesTableBody.innerHTML = '';
+            zonas.forEach(zona => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-slate-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-900">${zona.nombre}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-1 font-semibold text-xs rounded-full" style="background-color:${riskColors[zona.riskLevel]}20; color:${riskColors[zona.riskLevel]}">${zona.riskLevel}</span></td>
+                    <td class="py-3 px-4 font-semibold">${zona.riesgo}%</td>
+                    <td class="py-3 px-4">${zona.sintomas}</td>
+                    <td class="py-3 px-4">${zona.agua.toFixed(0)}</td>
+                    <td class="py-3 px-4">${zona.temp}</td>`;
+                zonesTableBody.appendChild(row);
+            });
+        }
+
         // --- MOTOR DE SIMULACIÓN Y CONTROL ---
-        
-        let activeEvent = { type: 'normal', triggered: false };
-
-        // 1. EL "MOTOR" QUE MANTIENE TODO VIVO
         setInterval(updateSimulation, 2000);
-
-        // 2. EL ESCUCHA DEL TECLADO QUE "INYECTA" EVENTOS
         document.addEventListener('keydown', (e) => {
-            if (['1', '2', '3', '4'].includes(e.key)) {
-                activeEvent = { type: e.key, triggered: true };
-            }
+            if (['1', '2', '3', '4'].includes(e.key)) activeEvent = { type: e.key, triggered: true };
         });
 
-        // 3. LA FUNCIÓN PRINCIPAL QUE CORRE CADA 2 SEGUNDOS
         function updateSimulation() {
-            // A. Aplicar eventos disparados por el teclado
             if (activeEvent.triggered) {
-                let logMessage = "Volviendo a estado normal...";
+                let logMessage = "Sistema volviendo a estado normal...";
                 let logLevel = "Bajo";
-                
-                // Primero, resetea cualquier evento anterior para que el nuevo tenga efecto
                 zonas.forEach(z => { z.riesgoActual = z.riesgoBase; z.sintomas = 0; });
-
                 switch (activeEvent.type) {
                     case '2':
-                        zonas[2].riesgoActual += 30; // Aumenta riesgo en Centro de Glew
-                        zonas[2].sintomas = 5;
-                        logMessage = `<b>Reporte de Síntomas</b> inyectado en <b>Centro de Glew</b>.`;
-                        logLevel = 'Moderado';
+                        zonas[2].riesgoActual += 30; zonas[2].sintomas = 5;
+                        logMessage = `<b>Reporte de Síntomas</b> inyectado en <b>Centro de Glew</b>.`; logLevel = 'Moderado';
                         break;
                     case '3':
-                        zonas[1].riesgoActual += 40; // Aumenta riesgo en Las Casitas
-                        logMessage = `Evento de <b>Alerta Moderada</b> inyectado en <b>B. Las Casitas</b>.`;
-                        logLevel = 'Moderado';
+                        zonas[1].riesgoActual += 40; zonas[1].sintomas = 3;
+                        logMessage = `<b>Alerta Moderada</b> inyectada en <b>B. Las Casitas</b>.`; logLevel = 'Moderado';
                         break;
                     case '4':
-                        zonas[3].riesgoActual += 60; // Aumenta riesgo en Los Alamos
-                        logMessage = `<b>ALERTA ALTA</b> inyectada manualmente en <b>B. Los Alamos</b>.`;
-                        logLevel = 'Alto';
+                        zonas[3].riesgoActual += 60; zonas[3].sintomas = 8;
+                        logMessage = `<b>ALERTA ALTA</b> inyectada en <b>B. Los Alamos</b>.`; logLevel = 'Alto';
                         break;
                 }
                 addEventToLog(logMessage, logLevel);
-                activeEvent.triggered = false; // El evento ya fue procesado
+                activeEvent.triggered = false;
             }
 
-            // B. Simulación de fondo (cíclica y suave)
             let totalRisk = 0;
             zonas.forEach(zona => {
-                // El riesgo tiende a volver a su valor base lentamente
                 zona.riesgoActual += (zona.riesgoBase - zona.riesgoActual) * 0.1;
-
                 const cycle = Math.sin(Date.now() / 60000 + zona.id);
-                zona.riesgoActual += cycle * 5; // Pequeña fluctuación natural
-
-                // Actualizar todas las variables visuales
+                zona.riesgoActual += cycle * 5;
                 zona.riesgo = Math.min(100, Math.max(0, zona.riesgoActual)).toFixed(0);
+                zona.sintomas = Math.max(0, zona.sintomas + Math.round(cycle * 2)); // Síntomas también fluctúan un poco
                 zona.agua = Math.max(0, zona.riesgo / 2 + cycle * 5);
                 zona.temp = (24 + cycle * 4).toFixed(1);
                 zona.humedad = (70 - cycle * 15).toFixed(1);
                 zona.mosquitos = Math.max(0, zona.agua / 3 + cycle * 3);
                 totalRisk += parseFloat(zona.riesgo);
-                
                 let riskLevel = 'Bajo';
                 if (zona.riesgo >= 60) riskLevel = 'Alto'; else if (zona.riesgo >= 30) riskLevel = 'Moderado';
-                zona.riskLevel = riskLevel;
-
                 if (riskLevel !== zona.previousRiskLevel) {
                     addEventToLog(`Riesgo en <b>${zona.nombre}</b> cambió a <b>${riskLevel}</b>.`, riskLevel);
                     zona.previousRiskLevel = riskLevel;
                 }
-                
+                zona.riskLevel = riskLevel;
                 markers[zona.id].setStyle({ fillColor: riskColors[riskLevel] });
                 markers[zona.id].bindPopup(`<b>${zona.nombre}</b><br>Riesgo: <b>${zona.riesgo}%</b> (${riskLevel})`);
             });
             
-            // C. Actualizar todos los componentes de la UI
             updateAllVisuals(totalRisk);
         }
 
         function updateAllVisuals(totalRisk) {
             const avgRisk = totalRisk / zonas.length;
+            const avgData = {
+                riesgo: avgRisk,
+                sintomas: zonas.reduce((a, b) => a + b.sintomas, 0) / zonas.length, // <<<--- AQUÍ ESTABA EL ERROR, AHORA CORREGIDO
+                agua: zonas.reduce((a, b) => a + b.agua, 0) / zonas.length,
+                temp: zonas.reduce((a, b) => a + parseFloat(b.temp), 0) / zonas.length,
+                humedad: zonas.reduce((a, b) => a + parseFloat(b.humedad), 0) / zonas.length,
+                mosquitos: zonas.reduce((a, b) => a + b.mosquitos, 0) / zonas.length,
+            };
+            const hora = new Date().toLocaleTimeString('es-AR');
+            Object.keys(charts).forEach(key => {
+                const chart = charts[key];
+                if (chart.data.labels.length > 20) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
+                chart.data.labels.push(hora);
+                chart.data.datasets[0].data.push(avgData[key].toFixed(1));
+                chart.update('quiet');
+            });
+            
+            updateZonesTable();
+            
             const globalStatusDiv = document.getElementById('status-banner');
             const globalRiskDiv = document.getElementById('generalRiskStatus');
             let globalRiskLevel = 'Bajo';
@@ -213,44 +248,25 @@
             globalRiskDiv.innerHTML = `Nivel de Alerta General: <span class="font-extrabold" style="color:${globalRiskColor};">${globalRiskLevel}</span>`;
             const bgColorClass = {Bajo: 'bg-green-100', Moderado: 'bg-yellow-100', ALERTA: 'bg-red-100'}[globalRiskLevel];
             globalStatusDiv.className = `flex items-center justify-center gap-4 p-4 rounded-lg mb-8 text-2xl font-semibold shadow-md text-center transition-all duration-500 ${bgColorClass}`;
-            
-            updateZonesTable();
-            
-            const avgData = {
-                riesgo: avgRisk,
-                sintomas: zonas.reduce((a, b) => a + b.sintomas, 0),
-                agua: zonas.reduce((a, b) => a + b.agua, 0) / zonas.length,
-                temp: zonas.reduce((a, b) => a + parseFloat(b.temp), 0) / zonas.length,
-                humedad: zonas.reduce((a, b) => a + parseFloat(b.humedad), 0) / zonas.length,
-                mosquitos: zonas.reduce((a, b) => a + b.mosquitos, 0) / zonas.length,
-            };
-
-            const hora = new Date().toLocaleTimeString('es-AR');
-            Object.keys(charts).forEach(key => {
-                const chart = charts[key];
-                if (chart.data.labels.length > 20) {
-                    chart.data.labels.shift();
-                    chart.data.datasets[0].data.shift();
-                }
-                chart.data.labels.push(hora);
-                chart.data.datasets[0].data.push(avgData[key].toFixed(1));
-                chart.update('quiet');
-            });
         }
         
-        // --- LÓGICA DE PESTAÑAS (SIN CAMBIOS) ---
+        // LÓGICA DE PESTAÑAS
         const tabs = document.querySelectorAll('.tab-button');
         const panes = document.querySelectorAll('.tab-pane');
-        tabs.forEach(tab => { tab.addEventListener('click', () => { /* ...código sin cambios... */ }); });
-
-        // --- INICIALIZACIÓN ---
-        updateSimulation(); // Primera llamada para llenar la página
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetPane = document.getElementById(`tab-${tab.dataset.tab}`);
+                tabs.forEach(t => {
+                    t.classList.remove('active', 'text-blue-600', 'border-blue-600');
+                    t.classList.add('text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300');
+                });
+                tab.classList.add('active', 'text-blue-600', 'border-blue-600');
+                tabs.forEach(p => panes[Array.from(tabs).indexOf(p)].classList.add('hidden'));
+                targetPane.classList.remove('hidden');
+            });
+        });
         
-        // --- FUNCIONES AUXILIARES (PARA NO REPETIR CÓDIGO) ---
-        function createChart(id, label, color) { const ctx = document.getElementById(id).getContext('2d'); const gradient = ctx.createLinearGradient(0, 0, 0, 150); gradient.addColorStop(0, `${color}40`); gradient.addColorStop(1, `${color}00`); return new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: gradient, borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true }] }, options: { responsive: true, scales: { y: { beginAtZero: true }, x: { ticks: { display: false } } } } }); }
-        function addEventToLog(message, level) { const log = document.getElementById('event-log'); const colors = { Alto: 'text-red-600', Moderado: 'text-yellow-600', Bajo: 'text-green-600' }; const time = new Date().toLocaleTimeString('es-AR'); const entry = document.createElement('p'); entry.className = `p-2 rounded-md bg-slate-50 ${colors[level] || 'text-slate-700'}`; entry.innerHTML = `<span class="font-semibold">[${time}]</span> ${message}`; log.prepend(entry); if (log.children.length > 10) { log.lastChild.remove(); } }
-        function updateZonesTable() { const body = document.getElementById('zones-table-body'); const riskColors = { Bajo: '#22c55e', Moderado: '#f97316', Alto: '#ef4444' }; const zonas = this.zonas; body.innerHTML = ''; zonas.forEach(zona => { const row = document.createElement('tr'); row.className = 'bg-white border-b hover:bg-slate-50'; row.innerHTML = ` <td class="py-3 px-4 font-medium text-slate-900">${zona.nombre}</td> <td class="py-3 px-4"> <span class="px-2 py-1 font-semibold text-xs rounded-full" style="background-color:${riskColors[zona.riskLevel]}20; color:${riskColors[zona.riskLevel]}"> ${zona.riskLevel} </span> </td> <td class="py-3 px-4 font-semibold">${zona.riesgo}%</td> <td class="py-3 px-4">${zona.sintomas}</td> <td class="py-3 px-4">${zona.agua.toFixed(0)}</td> <td class="py-3 px-4">${zona.temp}</td> `; body.appendChild(row); }); }
-        document.querySelectorAll('.tab-button').forEach(tab => { tab.addEventListener('click', () => { const targetPane = document.getElementById(`tab-${tab.dataset.tab}`); document.querySelectorAll('.tab-button').forEach(t => { t.classList.remove('active', 'text-blue-600', 'border-blue-600'); t.classList.add('text-slate-500'); }); tab.classList.add('active', 'text-blue-600', 'border-blue-600'); tab.classList.remove('text-slate-500'); document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden')); targetPane.classList.remove('hidden'); }); });
+        updateSimulation(); // Primera llamada para que la página no inicie vacía
     });
     </script>
 </body>
