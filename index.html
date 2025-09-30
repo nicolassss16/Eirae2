@@ -1,193 +1,229 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Eirae</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EIRAE v2.5 - Mago de Oz</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Estilos generales del cuerpo de la página */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-        }
-
-        /* Estilo del encabezado */
-        header {
-            width: 100%;
-            background-color: #ffffff;
-            padding: 15px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-bottom: 4px solid #2c5282;
-        }
-        header h1 {
-            margin: 0;
-            color: #2c5282;
-            font-size: 2em;
-        }
-        header p {
-            margin: 5px 0 0;
-            color: #666;
-        }
-
-        /* Contenedor principal que alinea el mapa y el panel */
-        .container {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: flex-start;
-            width: 95%;
-            max-width: 1400px;
-            margin-top: 20px;
-            gap: 20px;
-        }
-
-        /* Contenedor del mapa y las alertas */
-        .map-container {
-            position: relative;
-            width: 65%;
-            height: 75vh;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Estilo base para los círculos de alerta */
-        .alert-point {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0.6;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-        }
-
-        /* Colores y posiciones específicas de las alertas */
-        .green-alert { background-color: #48bb78; top: 60%; left: 65%; }
-        .yellow-alert { background-color: #ecc94b; top: 30%; left: 30%; }
-        .red-alert {
-            background-color: #f56565;
-            top: 55%;
-            left: 45%;
-            animation: pulse 1.5s infinite; /* Animación para la alerta roja */
-        }
-
-        /* Animación de pulso para la alerta importante */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(245, 101, 101, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
-        }
-        
-        /* Panel lateral de información */
-        .info-panel {
-            width: 35%;
-            height: 75vh;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        .info-panel h2 {
-            color: #c53030; /* Rojo oscuro para el título de la alerta */
-            margin-top: 0;
-            border-bottom: 2px solid #fed7d7;
-            padding-bottom: 10px;
-        }
-        .info-panel h3 {
-            color: #2d3748;
-            margin-bottom: 10px;
-        }
-        .data-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 1em;
-        }
-        .data-item span:first-child { color: #4a5568; }
-        .data-item span:last-child { font-weight: bold; color: #2d3748; }
-
-        .actions ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .actions li {
-            background-color: #edf2f7;
-            border-left: 4px solid #4299e1;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .leaflet-popup-content-wrapper { border-radius: 8px; }
+        .leaflet-popup-content { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-    <header>
-        <h1>Dashboard de Alertas Eirae</h1>
-        <p>Monitoreo de Salud Comunitaria Preventiva - Actualizado: 30/09/2025 18:19</p>
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="#" class="text-2xl font-bold text-blue-600">EIRAE</a>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#dashboard" class="text-slate-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                        <a href="#mapa-riesgo" class="text-slate-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">Mapa de Riesgo</a>
+                        <a href="#solucion" class="text-slate-600 hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">La Solución</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
     </header>
 
-    <div class="container">
-        <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d52366.52528779652!2d-58.42398574169749!3d-34.85199616087534!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcd495b05672af%3A0x64afb23b333b2b46!2sGlew%2C%20Provincia%20de%20Buenos%20Aires!5e0!3m2!1ses-419!2sar!4v1727731034298!5m2!1ses-419!2sar" allowfullscreen="" loading="lazy"></iframe>
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section class="text-center pt-8 pb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-3">
+                <span class="text-blue-600">Dashboard de Alerta Temprana</span>
+            </h1>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">Análisis Predictivo para la Prevención del Dengue en Glew.</p>
+        </section>
+
+        <section id="dashboard" class="mb-16">
+            <div id="status-banner" class="flex items-center justify-center gap-4 p-4 rounded-lg mb-8 text-2xl font-semibold shadow-md text-center transition-all duration-500">
+                <div id="generalRiskStatus">Nivel de Alerta General: --</div>
+            </div>
+
+            <div class="mb-8">
+                <div class="border-b border-slate-200">
+                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                        <button class="tab-button active text-blue-600 border-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="metricas">Métricas Generales</button>
+                        <button class="tab-button text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="resumen">Resumen por Zonas</button>
+                        <button class="tab-button text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="log">Log de Eventos</button>
+                    </nav>
+                </div>
+            </div>
+
+            <div id="tab-content">
+                <div id="tab-metricas" class="tab-pane active"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartRiesgo"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartSintomas"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartAgua"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartTemp"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartHumedad"></canvas></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><canvas id="chartMosquitos"></canvas></div>
+                </div></div>
+                <div id="tab-resumen" class="tab-pane hidden"><div class="bg-white p-6 rounded-xl shadow-lg"><div class="overflow-x-auto"><table class="w-full text-sm text-left">
+                    <thead class="text-xs text-slate-500 uppercase bg-slate-50"><tr>
+                        <th scope="col" class="py-3 px-4">Zona</th><th scope="col" class="py-3 px-4">Nivel Riesgo</th><th scope="col" class="py-3 px-4">Riesgo (%)</th><th scope="col" class="py-3 px-4">Síntomas</th><th scope="col" class="py-3 px-4">Agua (mm)</th><th scope="col" class="py-3 px-4">Temp (°C)</th>
+                    </tr></thead><tbody id="zones-table-body"></tbody>
+                </table></div></div></div>
+                <div id="tab-log" class="tab-pane hidden"><div class="bg-white p-6 rounded-xl shadow-lg"><div id="event-log" class="space-y-3 text-sm h-96 overflow-y-auto pr-2"></div></div></div>
+            </div>
+        </section>
+
+        <section id="mapa-riesgo" class="mb-16">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Mapa de Riesgo Zonal</h2>
+            <p class="text-slate-500 mb-6">Estado en tiempo real de cada microzona. Haz clic en un punto para ver detalles.</p>
+            <div id="map" class="h-[500px] w-full rounded-xl shadow-lg z-10"></div>
+        </section>
+        
+    </main>
+    
+    <footer class="bg-slate-800 text-white mt-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>EIRAE - Prototipo Controlado Manualmente v2.5</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Toda la configuración inicial de Gráficos, Mapa y Zonas (sin cambios) ---
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        function createChart(id, label, color) { /* ...código sin cambios... */ }
+        const charts = {
+            riesgo: createChart('chartRiesgo', 'Índice de Riesgo (%)', '#ef4444'),
+            sintomas: createChart('chartSintomas', 'Reportes de Síntomas', '#f97316'),
+            agua: createChart('chartAgua', 'Agua Estancada (mm)', '#3b82f6'),
+            temp: createChart('chartTemp', 'Temperatura (°C)', '#eab308'),
+            humedad: createChart('chartHumedad', 'Humedad (%)', '#22c55e'),
+            mosquitos: createChart('chartMosquitos', 'Densidad Mosquitos', '#a855f7'),
+        };
+        const zonas = [
+            { id: 1, nombre: 'B. Gendarmería', lat: -34.893, lon: -58.390, riesgoBase: 10, previousRiskLevel: 'Bajo' },
+            { id: 2, nombre: 'B. Las Casitas', lat: -34.885, lon: -58.388, riesgoBase: 25, previousRiskLevel: 'Bajo' },
+            { id: 3, nombre: 'Centro de Glew', lat: -34.888, lon: -58.384, riesgoBase: 15, previousRiskLevel: 'Bajo' },
+            { id: 4, nombre: 'B. Los Alamos', lat: -34.882, lon: -58.378, riesgoBase: 40, previousRiskLevel: 'Moderado' }
+        ];
+        const map = L.map('map').setView([-34.888, -58.384], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
+        const riskColors = { Bajo: '#22c55e', Moderado: '#f97316', Alto: '#ef4444' };
+        const markers = {};
+        zonas.forEach(zona => {
+            markers[zona.id] = L.circleMarker([zona.lat, zona.lon], { radius: 10, fillOpacity: 0.8, stroke: false }).addTo(map);
+        });
+        const eventLog = document.getElementById('event-log');
+        const zonesTableBody = document.getElementById('zones-table-body');
+        function addEventToLog(message, level) { /* ...código sin cambios... */ }
+        function updateZonesTable() { /* ...código sin cambios... */ }
+
+        // =================================================================================
+        // NUEVA LÓGICA DE CONTROL POR TECLADO
+        // =================================================================================
+        
+        // El estado de la simulación
+        let simulationState = {};
+
+        function triggerEvent(eventKey) {
+            // 1. Resetea los valores a su estado base
+            zonas.forEach(z => {
+                simulationState[z.id] = { riesgo: z.riesgoBase, sintomas: 0 };
+            });
+
+            // 2. Aplica los cambios del evento que se disparó
+            let logMessage = "Sistema en estado normal.";
+            let logLevel = "Bajo";
+
+            switch (eventKey) {
+                case '2': // Generar Síntomas
+                    simulationState[3].riesgo += 25; // Aumenta riesgo en Centro de Glew
+                    simulationState[3].sintomas = 4;
+                    logMessage = `<b>Reporte de Síntomas</b> recibido cerca de <b>Centro de Glew</b>.`;
+                    logLevel = 'Moderado';
+                    break;
+                case '3': // Alerta Moderada
+                    simulationState[2].riesgo += 35; // Aumenta riesgo en Las Casitas
+                    simulationState[2].sintomas = 3;
+                    logMessage = `Aumento de humedad y agua estancada en <b>B. Las Casitas</b>.`;
+                    logLevel = 'Moderado';
+                    break;
+                case '4': // Alerta Alta
+                    simulationState[4].riesgo += 60; // Aumenta riesgo en Los Alamos
+                    simulationState[4].sintomas = 8;
+                    logMessage = `<b>ALERTA ALTA</b>: Múltiples factores de riesgo en <b>B. Los Alamos</b>.`;
+                    logLevel = 'Alto';
+                    break;
+                case '1': // Estado Normal
+                default:
+                    // No hace falta hacer nada más, ya está en estado base.
+                    break;
+            }
             
-            <div class="alert-point green-alert" title="Zona 1: Sin Novedades"></div>
-            <div class="alert-point yellow-alert" title="Zona 2: Monitoreo Preventivo"></div>
-            <div class="alert-point red-alert" title="Zona 3: ALERTA DE BROTE ACTIVA"></div>
-        </div>
+            addEventToLog(logMessage, logLevel);
+            updateAllVisuals();
+        }
 
-        <div class="info-panel">
-            <h2>🔴 ALERTA DE BROTE ACTIVA</h2>
-            <h3>Análisis de la Zona 3 (Barrio Los Alamos)</h3>
+        function updateAllVisuals() {
+            // Esta función actualiza toda la página basándose en el 'simulationState'
+            let totalRisk = 0;
+            zonas.forEach(zona => {
+                const currentState = simulationState[zona.id] || { riesgo: zona.riesgoBase, sintomas: 0 };
+                zona.riesgo = Math.min(100, currentState.riesgo).toFixed(0);
+                zona.sintomas = currentState.sintomas;
+                // Simular otros datos basados en el riesgo
+                zona.agua = Math.round(zona.riesgo / 2);
+                zona.temp = (22 + (zona.riesgo / 10)).toFixed(1);
+                zona.humedad = (75 - (zona.riesgo / 5)).toFixed(1);
+                zona.mosquitos = Math.round(zona.riesgo / 10);
+                totalRisk += parseFloat(zona.riesgo);
 
-            <div class="data-item">
-                <span>Probabilidad de Brote (7 días):</span>
-                <span>78% (Alta)</span>
-            </div>
-            <div class="data-item">
-                <span>Reportes de Síntomas (24hs):</span>
-                <span>4 (Fiebre y dolor de cabeza)</span>
-            </div>
-            <div class="data-item">
-                <span>Humedad Promedio:</span>
-                <span>89%</span>
-            </div>
-            <div class="data-item">
-                <span>Criaderos de Mosquitos Detectados:</span>
-                <span>3 (Confirmados)</span>
-            </div>
-             <div class="data-item">
-                <span>Calidad del Aire:</span>
-                <span>Moderada</span>
-            </div>
+                let riskLevel = 'Bajo';
+                if (zona.riesgo >= 60) riskLevel = 'Alto'; else if (zona.riesgo >= 30) riskLevel = 'Moderado';
+                zona.riskLevel = riskLevel;
 
-            <br>
-            <div class="actions">
-                <h3>📋 Acciones Urgentes Recomendadas</h3>
-                <ul>
-                    <li><strong>1. Visita en Terreno:</strong> Enviar equipo de promotores de salud a la zona de alerta para verificación y búsqueda de febriles.</li>
-                    <li><strong>2. Control Focal:</strong> Aplicar larvicida biológico en los criaderos detectados y eliminar agua estancada.</li>
-                    <li><strong>3. Comunicación Comunitaria:</strong> Distribuir folletería informativa y repelentes desde el Nodo Eirae local.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+                markers[zona.id].setStyle({ fillColor: riskColors[riskLevel] });
+                markers[zona.id].bindPopup(`<b>${zona.nombre}</b><br>Riesgo: <b>${zona.riesgo}%</b> (${riskLevel})`);
+            });
 
+            updateZonesTable();
+            // ... (El resto de la lógica para actualizar el banner y los gráficos se puede agregar aquí)
+            const avgRisk = totalRisk / zonas.length;
+            charts.riesgo.data.datasets[0].data = [avgRisk-10, avgRisk-5, avgRisk]; // Simular un pequeño historial
+            charts.sintomas.data.datasets[0].data = [0, 1, zonas.reduce((a, b) => a + b.sintomas, 0)];
+            // ... actualizar otros gráficos
+            Object.values(charts).forEach(chart => chart.update());
+        }
+
+        // Event listener para las teclas
+        document.addEventListener('keydown', (e) => {
+            if (['1', '2', '3', '4'].includes(e.key)) {
+                triggerEvent(e.key);
+            }
+        });
+
+        // --- Lógica de Pestañas (sin cambios) ---
+        const tabs = document.querySelectorAll('.tab-button');
+        const panes = document.querySelectorAll('.tab-pane');
+        tabs.forEach(tab => { tab.addEventListener('click', () => { /* ...código sin cambios... */ }); });
+
+        // Estado inicial de la página
+        triggerEvent('1'); // Inicia en estado normal
+    });
+    // Re-pegar funciones que se borraron para abreviar
+    function createChart(id, label, color) { const ctx = document.getElementById(id).getContext('2d'); const gradient = ctx.createLinearGradient(0, 0, 0, 150); gradient.addColorStop(0, `${color}40`); gradient.addColorStop(1, `${color}00`); return new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: gradient, borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true }] }, options: { responsive: true, scales: { y: { beginAtZero: true }, x: { ticks: { display: false } } } } }); }
+    function addEventToLog(message, level) { const log = document.getElementById('event-log'); const colors = { Alto: 'text-red-600', Moderado: 'text-yellow-600', Bajo: 'text-green-600' }; const time = new Date().toLocaleTimeString('es-AR'); const entry = document.createElement('p'); entry.className = `p-2 rounded-md bg-slate-50 ${colors[level] || 'text-slate-700'}`; entry.innerHTML = `<span class="font-semibold">[${time}]</span> ${message}`; log.prepend(entry); if (log.children.length > 10) { log.lastChild.remove(); } }
+    function updateZonesTable() { const body = document.getElementById('zones-table-body'); const riskColors = { Bajo: '#22c55e', Moderado: '#f97316', Alto: '#ef4444' }; const zonas = this.zonas; body.innerHTML = ''; zonas.forEach(zona => { const row = document.createElement('tr'); row.className = 'bg-white border-b hover:bg-slate-50'; row.innerHTML = ` <td class="py-3 px-4 font-medium text-slate-900">${zona.nombre}</td> <td class="py-3 px-4"> <span class="px-2 py-1 font-semibold text-xs rounded-full" style="background-color:${riskColors[zona.riskLevel]}20; color:${riskColors[zona.riskLevel]}"> ${zona.riskLevel} </span> </td> <td class="py-3 px-4 font-semibold">${zona.riesgo}%</td> <td class="py-3 px-4">${zona.sintomas}</td> <td class="py-3 px-4">${zona.agua.toFixed(0)}</td> <td class="py-3 px-4">${zona.temp}</td> `; body.appendChild(row); }); }
+    document.querySelectorAll('.tab-button').forEach(tab => { tab.addEventListener('click', () => { const targetPane = document.getElementById(`tab-${tab.dataset.tab}`); document.querySelectorAll('.tab-button').forEach(t => { t.classList.remove('active', 'text-blue-600', 'border-blue-600'); t.classList.add('text-slate-500'); }); tab.classList.add('active', 'text-blue-600', 'border-blue-600'); tab.classList.remove('text-slate-500'); document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden')); targetPane.classList.remove('hidden'); }); });
+    </script>
 </body>
 </html>
-
-
 
