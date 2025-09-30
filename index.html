@@ -1,344 +1,191 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EIRAE - Calidad del Aire y Medioambiente</title>
- 
-  <!-- Tailwind CSS for modern styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
- 
-  <!-- LeafletJS for maps -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
- 
-  <!-- Chart.js for data visualization -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- 
-  <!-- Custom Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Eirae</title>
+    <style>
+        /* Estilos generales del cuerpo de la página */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
 
+        /* Estilo del encabezado */
+        header {
+            width: 100%;
+            background-color: #ffffff;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: 4px solid #2c5282;
+        }
+        header h1 {
+            margin: 0;
+            color: #2c5282;
+            font-size: 2em;
+        }
+        header p {
+            margin: 5px 0 0;
+            color: #666;
+        }
 
-  <style>
-    /* Applying the Inter font to the whole page */
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc; /* Tailwind's slate-50 */
-    }
-  </style>
+        /* Contenedor principal que alinea el mapa y el panel */
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            width: 95%;
+            max-width: 1400px;
+            margin-top: 20px;
+            gap: 20px;
+        }
+
+        /* Contenedor del mapa y las alertas */
+        .map-container {
+            position: relative;
+            width: 65%;
+            height: 75vh;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Estilo base para los círculos de alerta */
+        .alert-point {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.6;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+        }
+
+        /* Colores y posiciones específicas de las alertas */
+        .green-alert { background-color: #48bb78; top: 60%; left: 65%; }
+        .yellow-alert { background-color: #ecc94b; top: 30%; left: 30%; }
+        .red-alert {
+            background-color: #f56565;
+            top: 55%;
+            left: 45%;
+            animation: pulse 1.5s infinite; /* Animación para la alerta roja */
+        }
+
+        /* Animación de pulso para la alerta importante */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(245, 101, 101, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
+        }
+        
+        /* Panel lateral de información */
+        .info-panel {
+            width: 35%;
+            height: 75vh;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .info-panel h2 {
+            color: #c53030; /* Rojo oscuro para el título de la alerta */
+            margin-top: 0;
+            border-bottom: 2px solid #fed7d7;
+            padding-bottom: 10px;
+        }
+        .info-panel h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 1em;
+        }
+        .data-item span:first-child { color: #4a5568; }
+        .data-item span:last-child { font-weight: bold; color: #2d3748; }
+
+        .actions ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .actions li {
+            background-color: #edf2f7;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
-<body class="text-slate-800">
+<body>
 
+    <header>
+        <h1>Dashboard de Alertas Eirae</h1>
+        <p>Monitoreo de Salud Comunitaria Preventiva - Actualizado: 30/09/2025 18:19</p>
+    </header>
 
-  <!-- Header and Navigation -->
-  <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-    <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center">
-          <a href="#" class="text-2xl font-bold text-blue-600">EIRAE</a>
+    <div class="container">
+        <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d52366.52528779652!2d-58.42398574169749!3d-34.85199616087534!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcd495b05672af%3A0x64afb23b333b2b46!2sGlew%2C%20Provincia%20de%20Buenos%20Aires!5e0!3m2!1ses-419!2sar!4v1727731034298!5m2!1ses-419!2sar" allowfullscreen="" loading="lazy"></iframe>
+            
+            <div class="alert-point green-alert" title="Zona 1: Sin Novedades"></div>
+            <div class="alert-point yellow-alert" title="Zona 2: Monitoreo Preventivo"></div>
+            <div class="alert-point red-alert" title="Zona 3: ALERTA DE BROTE ACTIVA"></div>
         </div>
-        <div class="hidden md:block">
-          <div class="ml-10 flex items-baseline space-x-4">
-            <a href="#inicio" class="text-slate-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Inicio</a>
-            <a href="#funciones" class="text-slate-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Funciones</a>
-            <a href="#mapa-sensor" class="text-slate-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Ubicación</a>
-            <a href="#sobre" class="text-slate-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Sobre Nosotros</a>
-            <a href="#contacto" class="text-slate-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Contacto</a>
-          </div>
-        </div>
-        <!-- Mobile menu button can be added here if needed -->
-      </div>
-    </nav>
-  </header>
 
+        <div class="info-panel">
+            <h2>🔴 ALERTA DE BROTE ACTIVA</h2>
+            <h3>Análisis de la Zona 3 (Barrio Los Alamos)</h3>
 
-  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-
-    <!-- Hero Section -->
-    <section class="text-center py-12">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-3">
-            <span class="text-blue-600">Eirae</span> Aire y Medioambiente
-        </h1>
-        <p class="text-lg text-slate-600 max-w-2xl mx-auto">Monitoreo de la calidad del aire en tiempo real para un futuro más saludable.</p>
-    </section>
-
-
-    <!-- Real-time Data Dashboard -->
-    <section id="inicio" class="mb-16">
-      <h2 class="text-3xl font-bold text-slate-800 mb-2">Datos Simulados en Tiempo Real</h2>
-      <p class="text-slate-500 mb-6">Visualización de datos ambientales actualizados cada 2 segundos.</p>
-     
-      <div id="tempActual" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-8 text-center text-2xl font-semibold shadow-md">
-        Temperatura actual: -- °C
-      </div>
-
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" aria-label="Gráficos de calidad del aire y condiciones ambientales">
-        <!-- Chart Cards -->
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartCO2" aria-label="Gráfico de CO2" role="img"></canvas></div>
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartPM" aria-label="Gráfico de partículas PM2.5" role="img"></canvas></div>
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartTemp" aria-label="Gráfico de temperatura" role="img"></canvas></div>
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartHumedad" aria-label="Gráfico de humedad relativa" role="img"></canvas></div>
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartGas" aria-label="Gráfico de gas inflamable" role="img"></canvas></div>
-        <div class="bg-white p-6 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"><canvas id="chartCO" aria-label="Gráfico de monóxido de carbono" role="img"></canvas></div>
-      </div>
-     
-      <div class="text-center mt-10">
-        <button class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1" onclick="descargarCSV()" aria-label="Descargar datos simulados en formato CSV">
-          Descargar Datos (CSV)
-        </button>
-      </div>
-    </section>
-
-
-    <!-- Sensor Location Map -->
-    <section id="mapa-sensor" class="mb-16">
-      <h2 class="text-3xl font-bold text-slate-800 mb-2">Ubicación del Sensor</h2>
-      <p class="text-slate-500 mb-6">Punto de monitoreo principal para la recolección de datos.</p>
-      <div id="map" class="h-96 w-full rounded-xl shadow-lg z-10" role="application" aria-label="Mapa mostrando ubicación del sensor"></div>
-    </section>
-
-
-    <!-- Features Section -->
-    <section id="funciones" class="mb-16">
-        <h2 class="text-3xl font-bold text-slate-800 mb-6 text-center">Nuestras Funciones</h2>
-        <div class="grid md:grid-cols-3 gap-8 text-center">
-            <div class="bg-white p-8 rounded-xl shadow-lg">
-                <h3 class="font-bold text-xl mb-2 text-blue-600">Monitoreo Continuo</h3>
-                <p class="text-slate-600">Servicio de monitoreo en tiempo real con despliegue de sensores y entrega online de datos.</p>
+            <div class="data-item">
+                <span>Probabilidad de Brote (7 días):</span>
+                <span>78% (Alta)</span>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg">
-                <h3 class="font-bold text-xl mb-2 text-blue-600">Notificaciones Inteligentes</h3>
-                <p class="text-slate-600">Alertas personalizadas para zonas frecuentes y avisos cuando la calidad baja de cierto nivel.</p>
+            <div class="data-item">
+                <span>Reportes de Síntomas (24hs):</span>
+                <span>4 (Fiebre y dolor de cabeza)</span>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg">
-                <h3 class="font-bold text-xl mb-2 text-blue-600">Consultoría Ambiental</h3>
-                <p class="text-slate-600">Análisis, asesoramiento y recomendaciones para prácticas sostenibles y saludables.</p>
+            <div class="data-item">
+                <span>Humedad Promedio:</span>
+                <span>89%</span>
+            </div>
+            <div class="data-item">
+                <span>Criaderos de Mosquitos Detectados:</span>
+                <span>3 (Confirmados)</span>
+            </div>
+             <div class="data-item">
+                <span>Calidad del Aire:</span>
+                <span>Moderada</span>
+            </div>
+
+            <br>
+            <div class="actions">
+                <h3>📋 Acciones Urgentes Recomendadas</h3>
+                <ul>
+                    <li><strong>1. Visita en Terreno:</strong> Enviar equipo de promotores de salud a la zona de alerta para verificación y búsqueda de febriles.</li>
+                    <li><strong>2. Control Focal:</strong> Aplicar larvicida biológico en los criaderos detectados y eliminar agua estancada.</li>
+                    <li><strong>3. Comunicación Comunitaria:</strong> Distribuir folletería informativa y repelentes desde el Nodo Eirae local.</li>
+                </ul>
             </div>
         </div>
-    </section>
-   
-    <!-- About and Team Section -->
-    <section id="sobre" class="mb-16 bg-white p-8 rounded-xl shadow-lg">
-        <div class="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-                <h2 class="text-3xl font-bold text-slate-800 mb-4">Sobre EIRAE y Su Objetivo</h2>
-                <p class="text-slate-600 mb-4">La idea de EIRAE nació tras conocer el nivel de contaminación al que estamos expuestos y del que no somos conscientes.</p>
-                <p class="text-slate-600">Nuestro objetivo es ayudar a visibilizar la contaminación e incentivar a tomar medidas necesarias para mejorar la calidad del aire y proteger nuestra salud y medioambiente.</p>
-                 <div class="mt-4">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2">Zonas de Interés</h3>
-                    <ul class="list-disc list-inside text-slate-600 space-y-1">
-                        <li>Tandil, ARG</li>
-                        <li>9 de Julio, ARG</li>
-                        <li>Adrogué, ARG</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="bg-slate-100 p-6 rounded-lg" id="equipo">
-                <h3 class="text-2xl font-bold text-slate-800 mb-4">Equipo del Proyecto</h3>
-                 <div class="space-y-3 text-slate-700" aria-label="Información sobre el equipo del proyecto EIRAE">
-                     <p><strong>Integrantes:</strong> Nicolás Merlini y Paola Irigoitia</p>
-                     <p><strong>Escuela:</strong> E.E.S.T. N.º 2 Alte. Brown</p>
-                     <p><strong>Curso:</strong> 7mo 3ra - Orientación Programación</p>
-                 </div>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- Contact Section -->
-    <section id="contacto" class="text-center bg-white p-8 rounded-xl shadow-lg">
-      <h2 class="text-3xl font-bold text-slate-800 mb-4">Contacto</h2>
-      <p class="text-slate-600 text-lg">¿Preguntas o sugerencias? Contáctanos.</p>
-      <a href="mailto:Eirae@gmail.com" class="mt-4 inline-block bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">Eirae@gmail.com</a>
-    </section>
-
-
-  </main>
- 
-  <!-- Footer -->
-  <footer class="bg-slate-800 text-white mt-16">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
-      <p>Proyecto educativo desarrollado por el equipo Eirae · Escuela Técnica</p>
     </div>
-  </footer>
 
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const datosSimulados = [];
-     
-      // Initial sensor values
-      let currentValues = {
-          co2: 450 + Math.random() * 50,
-          pm25: 5 + Math.random() * 2,
-          temp: 18 + Math.random() * 2,
-          humedad: 45 + Math.random() * 10,
-          gas: 25 + Math.random() * 10,
-          co: 2 + Math.random() * 2,
-      };
-
-
-      // Chart.js global configuration
-      Chart.defaults.font.family = "'Inter', sans-serif";
-
-
-      // Function to create a new chart instance
-      function crearGrafico(id, label, color) {
-        const ctx = document.getElementById(id).getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-        gradient.addColorStop(0, `${color}40`); // Semi-transparent start
-        gradient.addColorStop(1, `${color}00`); // Fully transparent end
-
-
-        return new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [{
-              label: label,
-              data: [],
-              borderColor: color,
-              backgroundColor: gradient,
-              borderWidth: 2,
-              pointRadius: 0,
-              tension: 0.4,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: { beginAtZero: false },
-                x: { ticks: { display: false } }
-            },
-            plugins: {
-                legend: {
-                    labels: {
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        }
-                    }
-                }
-            }
-          }
-        });
-      }
-
-
-      const charts = {
-        co2: crearGrafico('chartCO2', 'CO₂ (ppm)', '#ef4444'), // red-500
-        pm: crearGrafico('chartPM', 'PM2.5 (µg/m³)', '#22c55e'), // green-500
-        temp: crearGrafico('chartTemp', 'Temperatura (°C)', '#f97316'), // orange-500
-        humedad: crearGrafico('chartHumedad', 'Humedad Relativa (%)', '#3b82f6'), // blue-500
-        gas: crearGrafico('chartGas', 'Gas Inflamable (ppm)', '#a855f7'), // purple-500
-        co: crearGrafico('chartCO', 'Monóxido de Carbono (ppm)', '#6366f1'), // indigo-500
-      };
-
-
-      // Function to update data with a more realistic fluctuation
-      function agregarDatos() {
-        const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit'});
-       
-        // Simulate smoother data changes
-        currentValues.co2 += (Math.random() - 0.5) * 10;
-        currentValues.pm25 += (Math.random() - 0.5) * 0.5;
-        currentValues.temp += (Math.random() - 0.5) * 0.2;
-        currentValues.humedad += (Math.random() - 0.5) * 1;
-        currentValues.gas += (Math.random() - 0.5) * 2;
-        currentValues.co += (Math.random() - 0.5) * 0.2;
-
-
-        // Clamp values to stay within a realistic range
-        const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
-        currentValues.co2 = clamp(currentValues.co2, 400, 800);
-        currentValues.pm25 = clamp(currentValues.pm25, 3, 25);
-        currentValues.temp = clamp(currentValues.temp, 15, 30);
-        currentValues.humedad = clamp(currentValues.humedad, 30, 80);
-        currentValues.gas = clamp(currentValues.gas, 15, 80);
-        currentValues.co = clamp(currentValues.co, 0.5, 12);
-
-
-        const newEntry = {
-          hora,
-          co2: currentValues.co2.toFixed(0),
-          pm25: currentValues.pm25.toFixed(2),
-          temp: currentValues.temp.toFixed(1),
-          humedad: currentValues.humedad.toFixed(1),
-          gas: currentValues.gas.toFixed(0),
-          co: currentValues.co.toFixed(1)
-        };
-       
-        datosSimulados.push(newEntry);
-
-
-        const dataPoints = [newEntry.co2, newEntry.pm25, newEntry.temp, newEntry.humedad, newEntry.gas, newEntry.co];
-        const chartKeys = ['co2', 'pm', 'temp', 'humedad', 'gas', 'co'];
-       
-        chartKeys.forEach((key, i) => {
-          const chart = charts[key];
-          if (chart.data.labels.length > 20) { // Keep last 20 data points
-            chart.data.labels.shift();
-            chart.data.datasets[0].data.shift();
-          }
-          chart.data.labels.push(hora);
-          chart.data.datasets[0].data.push(dataPoints[i]);
-          chart.update('quiet');
-        });
-
-
-        document.getElementById('tempActual').innerHTML = `Temperatura actual: <span class="font-extrabold">${newEntry.temp} °C</span>`;
-      }
-
-
-      // Initial data population
-      for(let i=0; i<20; i++) {
-        agregarDatos();
-      }
-      // Start the live update interval
-      setInterval(agregarDatos, 2000);
-
-
-      // Leaflet Map Initialization
-      const map = L.map('map').setView([-34.896489, -58.397594], 14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-     
-      const customIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: "<div style='background-color:#3b82f6;' class='marker-pin'></div><i class='material-icons'></i>",
-        iconSize: [30, 42],
-        iconAnchor: [15, 42]
-      });
-
-
-      L.marker([-34.896489, -58.397594]).addTo(map)
-        .bindPopup('<b>Ubicación del sensor Eirae</b><br>Adrogué, Buenos Aires.')
-        .openPopup();
-
-
-      // Make CSV download function globally available
-      window.descargarCSV = function() {
-        let csv = 'Hora,CO2 (ppm),PM2.5 (µg/m³),Temperatura (°C),Humedad (%),Gas Inflamable (ppm),CO (ppm)\n';
-        datosSimulados.forEach(row => {
-          csv += `${row.hora},${row.co2},${row.pm25},${row.temp},${row.humedad},${row.gas},${row.co}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.setAttribute('href', URL.createObjectURL(blob));
-        link.setAttribute('download', 'datos_simulados_eirae.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    });
-  </script>
 </body>
 </html>
 
