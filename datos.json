@@ -4,8 +4,8 @@
     {
       "id": 1,
       "nombre": "B. Gendarmería",
-      "riesgo": 100,
-      "sintomas": 10,
+      "riesgo": 22,
+      "sintomas": 1,
       "agua": 15,
       "temp": 25.1
     },
