@@ -1,0 +1,57 @@
+{
+  "nivelAlertaGeneral": "Moderado",
+  "zonas": [
+    {
+      "id": 1,
+      "nombre": "B. Gendarmería",
+      "riesgo": 22,
+      "sintomas": 1,
+      "agua": 15,
+      "temp": 25.1
+    },
+    {
+      "id": 2,
+      "nombre": "B. Las Casitas",
+      "riesgo": 45,
+      "sintomas": 3,
+      "agua": 25,
+      "temp": 26.3
+    },
+    {
+      "id": 3,
+      "nombre": "Centro de Glew",
+      "riesgo": 28,
+      "sintomas": 2,
+      "agua": 18,
+      "temp": 25.5
+    },
+    {
+      "id": 4,
+      "nombre": "B. Los Alamos",
+      "riesgo": 65,
+      "sintomas": 6,
+      "agua": 38,
+      "temp": 27.1
+    }
+  ],
+  "logEventos": [
+    {
+      "hora": "10:55:02",
+      "mensaje": "<b>ALERTA</b>: Nivel de riesgo en <b>B. Los Alamos</b> ha subido a <b>Alto</b>.",
+      "nivel": "Alto"
+    },
+    {
+      "hora": "10:54:12",
+      "mensaje": "Aumento de reportes de síntomas en <b>Centro de Glew</b>.",
+      "nivel": "Moderado"
+    }
+  ],
+  "metricasGenerales": {
+    "riesgo": 40.0,
+    "sintomas": 3.0,
+    "agua": 24.0,
+    "temp": 26.0,
+    "humedad": 68.0,
+    "mosquitos": 12.0
+  }
+}
